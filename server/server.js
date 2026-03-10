@@ -1,11 +1,74 @@
 import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
+import { GoogleGenAI } from "@google/genai";
+
+dotenv.config();
 
 const app = express();
 const PORT = 3001;
 
 app.use(cors());
 app.use(express.json());
+
+// Initialize Google GenAI client
+let aiClient = null;
+if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== "your_gemini_api_key_here") {
+  try {
+    aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    console.log("✅ Google GenAI initialized successfully.");
+  } catch (error) {
+    console.error("❌ Failed to initialize Google GenAI:", error.message);
+  }
+} else {
+  console.log("⚠️ GEMINI_API_KEY is not set. Using fallback static rule-based chat. Please set your key in .env");
+}
+
+const SYSTEM_INSTRUCTION = `You are Campus Navigator AI, an intelligent assistant designed to help college students navigate academic resources, courses, and career preparation.
+
+Your main responsibilities are:
+
+1. Course Recommendation System
+If a student asks about learning a skill (web development, AI, programming, etc.), recommend:
+- Beginner friendly courses
+- Free learning platforms (NPTEL, Coursera, FreeCodeCamp, YouTube)
+- Short roadmap to learn the skill
+- Important tools or technologies
+
+2. Placement Preparation Assistant
+If a student asks about placements, provide guidance on:
+- Aptitude preparation
+- Data structures and algorithms
+- Resume building
+- Interview preparation
+- Coding practice platforms (LeetCode, HackerRank, CodeChef)
+
+3. Branch Roadmap Guidance
+If a student asks about a branch (CSE, ECE, EEE, Mechanical, Civil), give a semester-wise roadmap including:
+- Important subjects
+- Skills to learn
+- Projects to build
+- Internship suggestions
+
+4. Campus Information Support
+Answer questions about:
+- Campus events
+- Academic resources
+- Study materials
+- Career guidance
+- Internship opportunities
+
+5. Response Style
+- Keep answers simple and student friendly
+- Use bullet points when explaining
+- Avoid very long paragraphs
+- Provide practical suggestions
+
+6. If the question is unrelated to campus, studies, or career guidance, politely respond:
+"I am designed to assist with campus information, courses, and placement preparation."
+
+Always try to guide students toward improving skills, learning new technologies, and preparing for jobs.`;
+
 
 // ─── Course Knowledge Base ────────────────────────────────────────────────
 const courseDatabase = {
@@ -506,13 +569,34 @@ function getDefaultResponse() {
 }
 
 // ─── Chat Endpoint ────────────────────────────────────────────────────────
-app.post("/chat", (req, res) => {
+app.post("/chat", async (req, res) => {
   const { message } = req.body;
 
   if (!message || typeof message !== "string") {
     return res.status(400).json({ error: "Message is required." });
   }
 
+  // If AI client is configured, use Gemini
+  if (aiClient) {
+    try {
+      const response = await aiClient.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: message,
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+        }
+      });
+
+      // Remove any unwanted specific formats to match standard markdown formatting
+      // although Gemini does well naturally with the requested style.
+      return res.json({ reply: response.text });
+    } catch (error) {
+      console.error("AI Generation Error:", error.message);
+      return res.json({ reply: "Oops! I encountered an error connecting to my AI brain. Please check your API key and try again later. 🧠❌\n\nFallback behavior will engage if you start the server without the key." });
+    }
+  }
+
+  // Fallback to static rule-based system
   const trimmed = message.trim().toLowerCase();
   let reply;
 
