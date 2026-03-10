@@ -10,6 +10,12 @@ export default defineConfig({
     hmr: {
       overlay: false,
     },
+    proxy: {
+      "/chat": {
+        target: "http://localhost:3001",
+        changeOrigin: true,
+      },
+    },
   },
   plugins: [react()],
   resolve: {

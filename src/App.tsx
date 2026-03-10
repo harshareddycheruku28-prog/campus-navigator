@@ -11,6 +11,7 @@ import PredictorResult from "./pages/PredictorResult";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
+import ChatBot from "./components/ChatBot";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      <ChatBot />
     </TooltipProvider>
   </QueryClientProvider>
 );
