@@ -192,7 +192,8 @@ export default function ChatBot() {
         setIsTyping(true);
 
         try {
-            const response = await fetch("/chat", {
+            const chatApiUrl = import.meta.env.VITE_CHAT_API_URL || "https://campus-navigator-2me4.onrender.com/chat";
+            const response = await fetch(chatApiUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message: text.trim() }),
@@ -346,8 +347,8 @@ export default function ChatBot() {
                                     )}
                                     <div
                                         className={`max-w-[80%] rounded-2xl px-4 py-3 text-[13.5px] leading-relaxed ${msg.sender === "user"
-                                                ? "rounded-br-md text-white"
-                                                : "rounded-bl-md text-gray-200"
+                                            ? "rounded-br-md text-white"
+                                            : "rounded-bl-md text-gray-200"
                                             }`}
                                         style={
                                             msg.sender === "user"

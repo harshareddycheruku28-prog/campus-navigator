@@ -568,7 +568,11 @@ function getDefaultResponse() {
   return `I'm not sure I understand that topic yet. 🤔\n\nTry asking about popular subjects like:\n• **Python**, **Java**, **JavaScript**, **C++**\n• **Machine Learning**, **AI**, **Deep Learning**\n• **Web Development**, **Data Science**\n• **Cloud Computing**, **Cybersecurity**\n• **SQL**, **Node.js**, **React**\n• **DevOps**, **Blockchain**\n\nOr type **"help"** to see all available topics! 📖`;
 }
 
-// ─── Chat Endpoint ────────────────────────────────────────────────────────
+// ─── Chat Endpoints ───────────────────────────────────────────────────────
+app.get("/chat", (req, res) => {
+  res.send("Campus Navigator Chat API is running 🚀");
+});
+
 app.post("/chat", async (req, res) => {
   const { message } = req.body;
 
@@ -576,7 +580,7 @@ app.post("/chat", async (req, res) => {
     return res.status(400).json({ error: "Message is required." });
   }
 
-  // If AI client is configured, use Gemini
+  // If AI client is configured, try to use Gemini
   if (aiClient) {
     try {
       const response = await aiClient.models.generateContent({
@@ -587,12 +591,11 @@ app.post("/chat", async (req, res) => {
         }
       });
 
-      // Remove any unwanted specific formats to match standard markdown formatting
-      // although Gemini does well naturally with the requested style.
+      // Return the AI response if successful
       return res.json({ reply: response.text });
     } catch (error) {
-      console.error("AI Generation Error:", error.message);
-      return res.json({ reply: "Oops! I encountered an error connecting to my AI brain. Please check your API key and try again later. 🧠❌\n\nFallback behavior will engage if you start the server without the key." });
+      console.error("AI Generation Error:", error.message, "— falling back to rule-based system.");
+      // Fall through to the rule-based system below instead of returning an error
     }
   }
 
@@ -629,7 +632,11 @@ app.post("/chat", async (req, res) => {
   res.json({ reply });
 });
 
-// ─── Health Check ─────────────────────────────────────────────────────────
+// ─── Health Check & Root ──────────────────────────────────────────────────
+app.get("/", (req, res) => {
+  res.send("Campus Navigator Backend Running 🚀");
+});
+
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
